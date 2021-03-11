@@ -1,5 +1,3 @@
-import Util.DataHandler;
-import Util.SeleniumUtils;
 import activesupport.IllegalBrowserException;
 import activesupport.driver.Browser;
 import org.apache.logging.log4j.LogManager;
@@ -7,12 +5,11 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 public class ScanPage {
@@ -35,30 +32,47 @@ public class ScanPage {
     }
 
     private static final Logger LOGGER = LogManager.getLogger(ScanPage.class);
+    Set<String> urlSet = new HashSet<>();
 
     public void scanForSubTree(String baseURL) throws IOException, IllegalBrowserException {
         Browser.navigate().get(baseURL);
         List<WebElement> links = Browser.navigate().findElements(By.tagName("a"));
         for (WebElement link : links) {
             setUrl(link.getAttribute("href"));
-            if (!url.contains(getBaseURL()) || (url.contains("logout"))) {
+            if (!url.contains(getBaseURL()) || (url.contains("logout")) || (url.contains("?sort"))) {
                 LOGGER.info(getUrl().concat(" did not get scanned"));
             } else {
-                DataHandler.writeToFile(tempFileName, getUrl());
+                urlSet.add(getUrl());
             }
         }
     }
 
-    public void scanSubTree() throws IOException {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(tempFileName));
-            while ((url = reader.readLine()) != null) {
-                Browser.navigate().get(url);
-                SeleniumUtils.waitForLoad(Browser.navigate());
+    public Set<String> scanForAllURLs(String internalUrl) throws IOException, IllegalBrowserException {
+        Set<String> allUrls = new HashSet<>();
+
+        scanForSubTree(internalUrl);
+
+        String urlRegex = null;
+
+        boolean stillAdding = true;
+        int previousAllUrlsSize = 0;
+        while (stillAdding) {
+            for (String url : urlSet) {
+                urlRegex = url.replaceAll("\\/[0-9]{1,45}\\/", "\\/[0-9]{1,45}\\/");
+                if (!allUrls.contains(urlRegex)) {
+                    allUrls.add(url);
+                }
             }
-            reader.close();
-            DataHandler.DeleteFile(tempFileName);
-        } catch (FileNotFoundException | IllegalBrowserException ignored) {
+            if (allUrls.size() == previousAllUrlsSize) {
+                stillAdding = false;
+            }
+            previousAllUrlsSize = allUrls.size();
+
+            for (String url : allUrls) {
+                scanForSubTree(url);
+            }
         }
+
+        return allUrls;
     }
 }
