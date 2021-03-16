@@ -64,7 +64,6 @@ public class ScanPage {
         scanForSubTree(internalUrl);
         for (Iterator<String> iterator = parentURLS.iterator(); iterator.hasNext(); ) {
             String previous = iterator.next();
-            scanForSubTree(previous);
             if (!getLastElement().isEmpty()) {
                 iterator.remove();
                 System.out.println("REMOVED " + previous);
