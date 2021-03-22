@@ -1,21 +1,17 @@
 package Util;
 
-import activesupport.IllegalBrowserException;
 import com.google.common.base.Function;
-import org.jetbrains.annotations.NotNull;
 import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Wait;
 
-import java.net.MalformedURLException;
 import java.time.Duration;
 import java.util.List;
 
 public class Waits {
 
-    private static final int TIME_OUT_SECONDS = 60;
+    private static final int TIME_OUT_SECONDS = 15;
     private static final int POLLING_SECONDS = 1;
 
 
