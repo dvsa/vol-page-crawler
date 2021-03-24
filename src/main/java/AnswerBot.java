@@ -10,7 +10,7 @@ import java.util.List;
 
 public abstract class AnswerBot {
 
-    public static void navigateScanAndSubmitForm() throws MalformedURLException, IllegalBrowserException {
+    public static void completeAndSubmitForm() throws MalformedURLException, IllegalBrowserException {
         FakerUtils faker = new FakerUtils();
 
         if (Browser.navigate().findElements(By.tagName("input")).size() != 0) {

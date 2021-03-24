@@ -30,11 +30,11 @@ public class UrlTest {
         ScanPage scanPage = new ScanPage();
         Browser.navigate().get(internalUrl);
         Browser.navigate().findElement(By.name("username")).sendKeys("usr291");
-        Browser.navigate().findElement(By.name("password")).sendKeys("Get755Cob!VoxPig");
+        Browser.navigate().findElement(By.name("password")).sendKeys("Get755Cob!VoxPig"); // put into config or properties file.
         Browser.navigate().findElement(By.name("submit")).click();
         String[] baseUrls = {internalUrl, internalLicencePSV, internalLicenceGV, internalApplication,
                 internalVariation, internalBusRegsitration, internalTM, internalUser};
-        Set<String> allUrs = scanPage.scanForAllURLs(baseUrls);
+        Set<String> allUrs = scanPage.scanForUniqueAllURLs(baseUrls);
         Object[] allUrlsArray = allUrs.toArray();
         Arrays.sort(allUrlsArray);
 

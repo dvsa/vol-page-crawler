@@ -41,7 +41,7 @@ public class ScanPage {
 
 
 
-    public Set<String> scanForAllURLs(String[] baseUrls) throws IOException, IllegalBrowserException, InterruptedException {
+    public Set<String> scanForUniqueAllURLs(String[] baseUrls) throws IOException, IllegalBrowserException, InterruptedException {
 
         for (String url : baseUrls) {
             allUniqueUrls.add(url);
@@ -82,6 +82,9 @@ public class ScanPage {
         return allUniqueUrls;
     }
 
+    // Use a do while and incorporate initial scan up to the top of the method. move urlSet.clear() downwards to the to and use
+    // do {} while () where the while is the if statement with the break.
+
     public void scanForSubTreeLoopingPagination() throws IOException, IllegalBrowserException, InterruptedException {
 
         boolean paginationPresent = Browser.navigate().findElements(By.xpath("//a[@rel='Next']")).size() > 0;
@@ -94,7 +97,7 @@ public class ScanPage {
 
             int pageCount = 1;
 
-            while(paginationPresent && pageCount <= 10){
+            while(paginationPresent && pageCount <= 10) {
                 clickNextAndWaitForTableLoad(pageCount);
                 pageCount++;
                 tryCatchScanForSubTree();
@@ -104,7 +107,7 @@ public class ScanPage {
         else {
             scanForSubTree();
         }
-
+// Look at breaking early after a scan when there is no pagination. Don't need to run all the above first.
     }
 
     public void tryCatchScanForSubTree() throws IOException, IllegalBrowserException, InterruptedException {
@@ -114,11 +117,13 @@ public class ScanPage {
             sleep(5000);
             scanForSubTree();
         }
+        // Look at adding a counter to try
     }
 
     public void clickNextAndWaitForTableLoad(int pageCount) throws MalformedURLException, IllegalBrowserException {
         Browser.navigate().findElement(By.xpath("//a[@rel='Next']")).click();
         try {
+            // Look into waiting for current class on page number at the bottom of pagination.
             Waits.waitForElementToBePresent(Browser.navigate(), String.format("//a[text()='%s' and contains(@href,'page=')]", pageCount));
         } catch (NoSuchElementException | TimeoutException e) {
             Browser.navigate().findElement(By.xpath("//a[@rel='Next']")).click();
@@ -151,6 +156,9 @@ public class ScanPage {
                     urlSet.add(getUrl());
                 }
             }
+            //TODO: look into iterable classes and passing in a map or something to check exclusions.
+            // Use a break if it hits any of the exclusions.
+            // Write Unit Tests for methods - extract method for the exclusion sorting.
         }
     }
 }
