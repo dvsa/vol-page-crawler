@@ -1,16 +1,15 @@
 import Util.DataHandler;
+import Util.Login;
 import activesupport.IllegalBrowserException;
-import activesupport.driver.Browser;
 import org.junit.Before;
 import org.junit.Test;
-import org.openqa.selenium.By;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Set;
 
 public class UrlTest {
-    String internalUrl = "https://iuap1.qa.olcs.dev-dvsacloud.uk/";
     String internalLicencePSV = "https://iuap1.qa.olcs.dev-dvsacloud.uk/licence/21074";
     String internalLicenceGV = "https://iuap1.qa.olcs.dev-dvsacloud.uk/licence/369461";
     String internalApplication = "https://iuap1.qa.olcs.dev-dvsacloud.uk/application/1246831";
@@ -21,21 +20,31 @@ public class UrlTest {
 
     @Before
     public void setup() {
-        System.setProperty("baseURL", internalUrl);
+        System.setProperty("baseURL", Login.internalUrl);
         System.setProperty("browser", "chrome");
     }
 
     @Test
     public void internalScan() throws IOException, IllegalBrowserException, InterruptedException {
         ScanPage scanPage = new ScanPage();
-        Browser.navigate().get(internalUrl);
-        Browser.navigate().findElement(By.name("username")).sendKeys("usr291");
-        Browser.navigate().findElement(By.name("password")).sendKeys("Get755Cob!VoxPig"); // put into config or properties file.
-        Browser.navigate().findElement(By.name("submit")).click();
-        String[] baseUrls = {internalUrl, internalLicencePSV, internalLicenceGV, internalApplication,
+        Login.toInternal();
+        String[] baseUrls = {Login.internalUrl, internalLicencePSV, internalLicenceGV, internalApplication,
                 internalVariation, internalBusRegsitration, internalTM, internalUser};
-        Set<String> allUrs = scanPage.scanForUniqueAllURLs(baseUrls);
-        Object[] allUrlsArray = allUrs.toArray();
+        Set<String> allUrls = scanPage.scanForUniqueAllURLs(baseUrls);
+        Object[] allUrlsArray = allUrls.toArray();
+        Arrays.sort(allUrlsArray);
+
+        for (Object url : allUrlsArray) {
+            DataHandler.writeToFile("allUrls.txt", url.toString());
+        }
+    }
+
+    @Test
+    public void selfServeScan() throws IOException, IllegalBrowserException, InterruptedException {
+        CompleteJourneys completeJourneys = new CompleteJourneys();
+        Login.toSelfServe();
+        Set<String> allUrls= completeJourneys.completeStandardJourney(Login.selfServeUrl);
+        Object[] allUrlsArray = allUrls.toArray();
         Arrays.sort(allUrlsArray);
 
         for (Object url : allUrlsArray) {

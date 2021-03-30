@@ -1,49 +1,151 @@
+import Util.Login;
 import activesupport.IllegalBrowserException;
 import activesupport.driver.Browser;
+import org.openqa.selenium.By;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 public class CompleteJourneys {
 
 
+    public Set<String> completeStandardJourney(String baseUrl) throws IOException, IllegalBrowserException, InterruptedException {
+        ScanPage scanPage = new ScanPage();
+        ArrayList<Journey> allJourneys = new ArrayList<>();
+        Set<String> allUrls = new HashSet<>();
+        int journeyCounter = 1;
 
-    public void completeStandardJourney(String baseUrls) throws IOException, IllegalBrowserException {
+        Journey currentJourney = new Journey();
 
-        Browser.navigate().get(baseUrls);
+        boolean mappingCurrentJourney;
 
+        journeyLooper:
+        do {
+            String currentUrl = Browser.navigate().getCurrentUrl();
 
+            allUrls.add(currentUrl);
 
+            AnswerBot.completeForm(); // TODO: WILL NEED TO ADD SPECIFIC CHOICES IN LATER.
 
+            Set<String> scannedUrls = scanPage.scanForSubTreeLoopingPagination();
+            Set<String> submitIds = scanPage.scanForSubmitButtonIds();
 
+            mappingCurrentJourney = true;
+            if (scannedUrls.size() > 0) {
+                for (String url : scannedUrls) {
+                    Page page = new Page();
+                    page.link = url;
+
+                    if (mappingCurrentJourney) {
+                        currentJourney.urlAndPages.put(currentUrl, page);
+                        mappingCurrentJourney = false;
+                    } else {
+                        Journey forkedJourney = currentJourney.forkJourney();
+                        forkedJourney.urlAndPages.put(currentUrl, page);
+                        allJourneys.add(forkedJourney);
+                    }
+                }
+            }
+
+            if (submitIds.size() > 0) {
+                for (String submitId : submitIds) {
+                    Page page = new Page();
+                    page.submitSelector = submitId;
+
+                    if (mappingCurrentJourney) {
+                        currentJourney.urlAndPages.put(currentUrl, page);
+                        mappingCurrentJourney = false;
+                    } else {
+                        Journey forkedJourney = currentJourney.forkJourney();
+                        forkedJourney.urlAndPages.put(currentUrl, page);
+                        allJourneys.add(forkedJourney);
+                    }
+                }
+            }
+
+            Page currentPageInJourney = currentJourney.urlAndPages.get(currentUrl);
+
+            if (currentPageInJourney.link != null) {
+                Browser.navigate().get(currentPageInJourney.link);
+            } else {
+                Browser.navigate().findElement(By.id(currentPageInJourney.submitSelector)).click();
+            }
+
+            for (String url : currentJourney.urlAndPages.keySet()){
+                if (currentUrl.equals(url)) {
+                    if (allJourneys.size() == journeyCounter) {
+                        break journeyLooper;
+                    }
+                    currentJourney = allJourneys.get(journeyCounter++);
+                    //TODO: Add way of resetting url to the base url or the first url of that journey and repeat previous steps (cycle journey until journey is empty)
+                }
+            }
+
+        } while (true);
+
+        //choose between links and submits, keep going until journey is finished (returns to previously seen page on same journey)
+
+        mappingCurrentJourney = true;
+
+        return allUrls;
     }
 }
 
 
-// Store links, need to concatenate these in arrays - new arrays for each choice afterwards. - need to also store submit buttons with this.
-// go to link, if there is a submit button, fill form and submit values, then store new url. Need to repeat the journey through the arrays - use basic fill in form atm.
+//    TODO:  basic run_________________________________________________________________________________
+//    Create initial Journey instance and Journeys array
 
 
-// Store links, store submit buttons, if the url equals a previous one in the list, complete journey.
+//    loop over journeys in array
+//    if there is a current stored submit, then fill in form as same as before (set choices for the moment) and click that instead.
+//    else do underneath.
+
+//    do {
+//      for each page, store url in uniqueUrlList (same licences so ignore numbers?).
+//      Fill in page, loop noOfSubmits {
+//          duplicate journeys, append journeys onto array and append different submits on journeys with url as key.
+//      }
+//      Fill in page, loop noOflinks {
+//          duplicate journeys, append journeys onto array and append different submits on journeys with url as key.
+//      }
+//    click submit in the current journey instance relating to the url stored
+//    get current url and check if it has been stored in current journey at all? - mark journey as completed.
+//    } while(journeyNotComplete)
+
+// Loop over all journeys and if marked as broken (mark in try catch and continue next journey).
 
 
-// POSSIBLE SOLUTION DUPLICATE ARRAY BUT SET DIFFERENT ANSWERS IN EACH ARRAY FOR THE NEW FORK
-
-// [URL, CHOICE 1, CHOICE 2, CHOICE 3] - create array for each of these possible choices.
-// [URL, CHOICE 1 YES, CHOICE 2 YES, CHOICE 3 YES]
-// [URL, CHOICE 1 YES, CHOICE 2 YES, CHOICE 3 NO]
-// [URL, CHOICE 1 YES, CHOICE 2 NO, CHOICE 3 YES] etc.
-// Then loop over all these arrays for the different journeys.
-//TODO: ^^ IGNORE THIS FOR THE MOMENT ^^ focus on the basic journey first.
-// USE HASHMAPS FOR URL AND ARRAY OF CHOICES!!!
-// NEED CLASS FOR POSSIBLE ANSWERS TO INPUT FIELDS.
-
-// Array takes an array stored in it, duplicates it and stores both arrays in a hashmap with the url as the title?... nope.
+//    }
 
 
-//TODO: Do journeys as whole thing. Can't revisit half done journey sometimes.
-// Need to wrap up journeys as if they reach a previously seen page then it's looped back round.
-// How to decide when something is a new journey
 
-//TODO: Way to end journey is if it reaches a page already seen. Going to have to loop until page is previously stored page?
+//    Get url
+//    Get links
+//    Fill in radio buttons set way, fill in checkboxes set way, fill in all other fields.
+//    Store submit buttons.
+//    Click the first submit button,
+
+
+
+
+
+
+//    TODO: full permutations_________________________________________________________________________________
+
+//    get url
+//    get links (ignore fill address in yourself links)
+//    fill in Y/checked on everything
+//    click all links for fill in yourself
+//    fill in text, dates, (might need to make search if it's available on a page)/ find all "fill in yourself"
+
+//    do all combinations on a page while storing them and then loop over all stored journeys?
+
+
+//    store radio buttons and checkboxes.
+//    for numberOfRadioButtons.size() create instances - get possible choices and store them. loop within loop within loop
+//    create instance duplicates but with all different combinations of radio buttons, checkboxes, and submit buttons.
+//    add instances to global array of journeys.
+//    fill in radio buttons
+//    fill in checkboxes

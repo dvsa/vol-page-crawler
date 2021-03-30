@@ -22,7 +22,6 @@ public class ScanPage {
     static URI uri = URI.create(BASEURL);
 
     private String url = "";
-    final static String tempFileName = "URLList.txt";
     public static String getBaseURL() {
         return uri.getAuthority();
     }
@@ -36,34 +35,34 @@ public class ScanPage {
     }
 
     private static final Logger LOGGER = LogManager.getLogger(ScanPage.class);
-    Set<String> urlSet = new HashSet<>();
-    Set<String> allUniqueUrls = new HashSet<>();
 
 
 
     public Set<String> scanForUniqueAllURLs(String[] baseUrls) throws IOException, IllegalBrowserException, InterruptedException {
+        Set<String> allScannedUrls = new HashSet<>();
+        Set<String> allUniqueUrls = new HashSet<>();
 
         for (String url : baseUrls) {
             allUniqueUrls.add(url);
             Browser.navigate().get(url);
-            scanForSubTreeLoopingPagination();
+            allScannedUrls.addAll(scanForSubTreeLoopingPagination());
         }
 
         String urlRegex;
         int previousAllUrlsSize = 0;
-        Set<String> newUrls = new HashSet<>();
+        Set<String> newUniqueUrls = new HashSet<>();
 
         while (true) {
 
-            newUrls.clear();
+            newUniqueUrls.clear();
 
-            for (String url : urlSet) {
-                urlRegex = url.replaceAll("\\/[0-9]{1,45}\\/", "/[0-9]{1,45}/");
+            for (String scannedUrl : allScannedUrls) {
+                urlRegex = scannedUrl.replaceAll("\\/[0-9]{1,45}\\/", "/[0-9]{1,45}/");
                 String finalUrlRegex = urlRegex;
                 boolean containsUrl = allUniqueUrls.stream().anyMatch(x -> x.matches(finalUrlRegex));
                 if (!containsUrl) {
-                    allUniqueUrls.add(url);
-                    newUrls.add(url);
+                    allUniqueUrls.add(scannedUrl);
+                    newUniqueUrls.add(scannedUrl);
                 }
             }
 
@@ -72,10 +71,10 @@ public class ScanPage {
             }
             previousAllUrlsSize = allUniqueUrls.size();
 
-            urlSet.clear();
-            for (String url : newUrls) {
+            allScannedUrls.clear();
+            for (String url : newUniqueUrls) {
                 Browser.navigate().get(url);
-                scanForSubTreeLoopingPagination();
+                allScannedUrls.addAll(scanForSubTreeLoopingPagination());
             }
         }
 
@@ -85,14 +84,14 @@ public class ScanPage {
     // Use a do while and incorporate initial scan up to the top of the method. move urlSet.clear() downwards to the to and use
     // do {} while () where the while is the if statement with the break.
 
-    public void scanForSubTreeLoopingPagination() throws IOException, IllegalBrowserException, InterruptedException {
-
+    public Set<String> scanForSubTreeLoopingPagination() throws IOException, IllegalBrowserException, InterruptedException {
+        Set<String> allScannedUrls = new HashSet<>();
         boolean paginationPresent = Browser.navigate().findElements(By.xpath("//a[@rel='Next']")).size() > 0;
 
         if (paginationPresent) {
             Browser.navigate().findElement(By.xpath("//a[contains(@href,'limit=50') and text()='50']")).click();
             Waits.waitForTableToLoad50Rows(Browser.navigate());
-            tryCatchScanForSubTree();
+            allScannedUrls.addAll(tryCatchScanForSubTree());
             paginationPresent = Browser.navigate().findElements(By.xpath("//a[@rel='Next']")).size() > 0;
 
             int pageCount = 1;
@@ -100,27 +99,28 @@ public class ScanPage {
             while(paginationPresent && pageCount <= 10) {
                 clickNextAndWaitForTableLoad(pageCount);
                 pageCount++;
-                tryCatchScanForSubTree();
+                allScannedUrls.addAll(tryCatchScanForSubTree());
                 paginationPresent = Browser.navigate().findElements(By.xpath("//a[@rel='Next']")).size() > 0;
             }
         }
         else {
-            scanForSubTree();
+            allScannedUrls.addAll(scanForSubTree());
         }
+        return allScannedUrls;
 // Look at breaking early after a scan when there is no pagination. Don't need to run all the above first.
     }
 
-    public void tryCatchScanForSubTree() throws IOException, IllegalBrowserException, InterruptedException {
+    private Set<String> tryCatchScanForSubTree() throws IOException, IllegalBrowserException, InterruptedException {
         try {
-            scanForSubTree();
+            return scanForSubTree();
         } catch (StaleElementReferenceException e) {
             sleep(5000);
-            scanForSubTree();
+            return scanForSubTree();
         }
         // Look at adding a counter to try
     }
 
-    public void clickNextAndWaitForTableLoad(int pageCount) throws MalformedURLException, IllegalBrowserException {
+    private void clickNextAndWaitForTableLoad(int pageCount) throws MalformedURLException, IllegalBrowserException {
         Browser.navigate().findElement(By.xpath("//a[@rel='Next']")).click();
         try {
             // Look into waiting for current class on page number at the bottom of pagination.
@@ -130,7 +130,8 @@ public class ScanPage {
         }
     }
 
-    public void scanForSubTree() throws IOException, IllegalBrowserException {
+    private Set<String> scanForSubTree() throws IOException, IllegalBrowserException {
+        Set<String> scannedUrls = new HashSet<>();
 
         List<WebElement> links = Browser.navigate().findElements(By.tagName("a"));
 
@@ -153,12 +154,28 @@ public class ScanPage {
                         || url.contains("ms-word:ofe")) {
                     LOGGER.info(getUrl().concat(" did not get scanned"));
                 } else {
-                    urlSet.add(getUrl());
+                    scannedUrls.add(getUrl());
                 }
             }
             //TODO: look into iterable classes and passing in a map or something to check exclusions.
             // Use a break if it hits any of the exclusions.
             // Write Unit Tests for methods - extract method for the exclusion sorting.
         }
+        return scannedUrls;
+    }
+
+    public Set<String> scanForSubmitButtonIds() throws MalformedURLException, IllegalBrowserException {
+        List<WebElement> submitButtons = Browser.navigate().findElements(By.xpath("//button[@type='submit']"));
+        Set<String> submitButtonIds = null;
+
+        for(WebElement submit : submitButtons) {
+            if(!submit.getAttribute("name").contains("address")
+                || submit.getAttribute("class").contains("visually-hidden")) {
+                LOGGER.info("submit button ignored");
+            } else {
+                submitButtonIds.add(submit.getAttribute("id"));
+            }
+        }
+        return submitButtonIds;
     }
 }
