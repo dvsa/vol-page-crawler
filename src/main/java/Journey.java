@@ -11,19 +11,19 @@ public class Journey {
     boolean JourneyComplete;
 
 //  LinkedHashmap<url, Page>
-    LinkedHashMap<String, Page> urlAndPages = new LinkedHashMap<>();
+    LinkedHashMap<String, Page> pages = new LinkedHashMap<>();
 
 
     public Page getPage(String url) {
-        return urlAndPages.get(url);
+        return pages.get(url);
     }
 
     public Journey forkJourney() {
         Journey journey = new Journey();
 
-        Set<String> urls = journey.urlAndPages.keySet();
+        Set<String> urls = journey.pages.keySet();
         for(String url : urls) {
-            journey.urlAndPages.put(url, this.urlAndPages.get(url));
+            journey.pages.put(url, this.pages.get(url));
         }
 
         return journey;

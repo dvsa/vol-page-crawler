@@ -1,4 +1,3 @@
-import Util.Login;
 import activesupport.IllegalBrowserException;
 import activesupport.driver.Browser;
 import org.openqa.selenium.By;
@@ -21,6 +20,8 @@ public class CompleteJourneys {
 
         boolean mappingCurrentJourney;
 
+        Browser.navigate().get(baseUrl);
+
         journeyLooper:
         do {
             String currentUrl = Browser.navigate().getCurrentUrl();
@@ -39,11 +40,12 @@ public class CompleteJourneys {
                     page.link = url;
 
                     if (mappingCurrentJourney) {
-                        currentJourney.urlAndPages.put(currentUrl, page);
+                        currentJourney.pages.put(currentUrl, page);
                         mappingCurrentJourney = false;
+
                     } else {
                         Journey forkedJourney = currentJourney.forkJourney();
-                        forkedJourney.urlAndPages.put(currentUrl, page);
+                        forkedJourney.pages.put(currentUrl, page);
                         allJourneys.add(forkedJourney);
                     }
                 }
@@ -55,35 +57,50 @@ public class CompleteJourneys {
                     page.submitSelector = submitId;
 
                     if (mappingCurrentJourney) {
-                        currentJourney.urlAndPages.put(currentUrl, page);
+                        currentJourney.pages.put(currentUrl, page);
                         mappingCurrentJourney = false;
                     } else {
                         Journey forkedJourney = currentJourney.forkJourney();
-                        forkedJourney.urlAndPages.put(currentUrl, page);
+                        forkedJourney.pages.put(currentUrl, page);
                         allJourneys.add(forkedJourney);
                     }
                 }
             }
 
-            Page currentPageInJourney = currentJourney.urlAndPages.get(currentUrl);
+            Page currentPageInJourney = currentJourney.pages.get(currentUrl);
 
             if (currentPageInJourney.link != null) {
                 Browser.navigate().get(currentPageInJourney.link);
             } else {
                 Browser.navigate().findElement(By.id(currentPageInJourney.submitSelector)).click();
-            }
+            } // What happens if it's neither?
 
-            for (String url : currentJourney.urlAndPages.keySet()){
+            for (String url : currentJourney.pages.keySet()) {
                 if (currentUrl.equals(url)) {
                     if (allJourneys.size() == journeyCounter) {
                         break journeyLooper;
                     }
-                    currentJourney = allJourneys.get(journeyCounter++);
+                    journeyCounter++;
+
+                    //TODO: Need to enact way to repeat steps until the last page stored
+                    currentJourney = allJourneys.get(journeyCounter);
+                    for (String previousUrl : currentJourney.pages.keySet()) {
+                        Page previousPage = currentJourney.getPage(previousUrl);
+
+                        AnswerBot.completeForm();
+//                      previousPage.rePerformActions();
+
+                        if (previousPage.link != null) {
+                            Browser.navigate().get(previousPage.link);
+                        } else {
+                            Browser.navigate().findElement(By.id(previousPage.submitSelector)).click();
+                        }
+                    }
                     //TODO: Add way of resetting url to the base url or the first url of that journey and repeat previous steps (cycle journey until journey is empty)
                 }
             }
 
-        } while (true);
+        } while (true); // refactor this to have allJourneys.size() == journeyCounter instead of having break.
 
         //choose between links and submits, keep going until journey is finished (returns to previously seen page on same journey)
 
