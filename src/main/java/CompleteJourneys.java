@@ -36,6 +36,8 @@ public class CompleteJourneys {
 
             mappingCurrentJourney = true;
             if (scannedUrls != null) {
+                //TODO: Look at excluding links that are already within the journey.
+                // Makes more sense than stopping a journey after already creating so many branches.
                 for (String url : scannedUrls) {
                     Page page = new Page();
                     page.nextLink = url;
