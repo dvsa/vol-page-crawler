@@ -165,7 +165,8 @@ public class ScanPage {
                         || url.contains("your-account")
                         || url.contains("manage-user")
                         || url.contains("dashboard")
-                        || url.equals(getBaseURL())) {
+                        || url.equals(getBaseURL())
+                        || link.getAttribute("class").equals("govuk-back-link")) {
                     LOGGER.info(getUrl().concat(" did not get scanned"));
                 } else {
                     scannedUrls.add(getUrl());
