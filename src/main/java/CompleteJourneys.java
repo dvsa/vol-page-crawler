@@ -14,9 +14,10 @@ public class CompleteJourneys {
         ScanPage scanPage = new ScanPage();
         ArrayList<Journey> allJourneys = new ArrayList<>();
         Set<String> allUrls = new HashSet<>();
-        int journeyCounter = 1;
+        int journeyCounter = 0;
 
         Journey currentJourney = new Journey();
+        allJourneys.add(currentJourney);
 
         boolean mappingCurrentJourney;
 
@@ -34,81 +35,86 @@ public class CompleteJourneys {
             Set<String> submitIds = scanPage.scanForSubmitButtonIds();
 
             mappingCurrentJourney = true;
-            if (scannedUrls.size() > 0) {
+            if (scannedUrls != null) {
                 for (String url : scannedUrls) {
                     Page page = new Page();
-                    page.link = url;
+                    page.nextLink = url;
 
                     if (mappingCurrentJourney) {
-                        currentJourney.pages.put(currentUrl, page);
+                        currentJourney.addPage(currentUrl, page);
                         mappingCurrentJourney = false;
 
                     } else {
                         Journey forkedJourney = currentJourney.forkJourney();
-                        forkedJourney.pages.put(currentUrl, page);
+                        forkedJourney.addPage(currentUrl, page);
                         allJourneys.add(forkedJourney);
                     }
                 }
             }
 
-            if (submitIds.size() > 0) {
+            if (submitIds != null) {
                 for (String submitId : submitIds) {
                     Page page = new Page();
                     page.submitSelector = submitId;
 
                     if (mappingCurrentJourney) {
-                        currentJourney.pages.put(currentUrl, page);
+                        currentJourney.addPage(currentUrl, page);
                         mappingCurrentJourney = false;
                     } else {
                         Journey forkedJourney = currentJourney.forkJourney();
-                        forkedJourney.pages.put(currentUrl, page);
+                        forkedJourney.addPage(currentUrl, page);
                         allJourneys.add(forkedJourney);
                     }
                 }
             }
 
-            Page currentPageInJourney = currentJourney.pages.get(currentUrl);
-
-            if (currentPageInJourney.link != null) {
-                Browser.navigate().get(currentPageInJourney.link);
+            Page currentPageInJourney = currentJourney.getPage(currentUrl);
+            if (currentPageInJourney.nextLink != null) {
+                Browser.navigate().get(currentPageInJourney.nextLink);
             } else {
                 Browser.navigate().findElement(By.id(currentPageInJourney.submitSelector)).click();
-            } // What happens if it's neither?
+            } // TODO: What happens if it's neither?
+            // TODO: Move onto next journey (need method still)
 
-            for (String url : currentJourney.pages.keySet()) {
-                if (currentUrl.equals(url)) {
+            for (String url : currentJourney.getAllPageUrls()) {
+                if (Browser.navigate().getCurrentUrl().equals(url)) {
+
+                    // Kick out if I have reached the end of all journeys in allJourneys. NEED WAY OF CHECKING IF END OF LIST THEN KICK OUT OF LOOP.
                     if (allJourneys.size() == journeyCounter) {
                         break journeyLooper;
+                    } else {
+                        journeyCounter++;
                     }
-                    journeyCounter++;
 
                     //TODO: Need to enact way to repeat steps until the last page stored
-                    currentJourney = allJourneys.get(journeyCounter);
-                    for (String previousUrl : currentJourney.pages.keySet()) {
-                        Page previousPage = currentJourney.getPage(previousUrl);
+                    Journey nextJourney = allJourneys.get(journeyCounter);
+                    for (String previousUrl : nextJourney.getAllPageUrls()) {
+                        Page previousPage = nextJourney.getPage(previousUrl);
 
                         AnswerBot.completeForm();
 //                      previousPage.rePerformActions();
 
-                        if (previousPage.link != null) {
-                            Browser.navigate().get(previousPage.link);
+                        if (previousPage.nextLink != null) {
+                            Browser.navigate().get(previousPage.nextLink);
                         } else {
                             Browser.navigate().findElement(By.id(previousPage.submitSelector)).click();
-                        }
+                        } // Either will always exist because page has already been reached in previous Journey.
                     }
+                    currentJourney = nextJourney;
                     //TODO: Add way of resetting url to the base url or the first url of that journey and repeat previous steps (cycle journey until journey is empty)
                 }
+                // (Else move onto the next page and continue the same journey.
             }
 
         } while (true); // refactor this to have allJourneys.size() == journeyCounter instead of having break.
 
         //choose between links and submits, keep going until journey is finished (returns to previously seen page on same journey)
 
-        mappingCurrentJourney = true;
-
         return allUrls;
     }
 }
+
+// TODO: Need clause for variations as the link redirects to same page. Or just issue licence on variation?
 
 
 //    TODO:  basic run_________________________________________________________________________________

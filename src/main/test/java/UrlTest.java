@@ -9,6 +9,8 @@ import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Set;
 
+import static java.lang.Thread.sleep;
+
 public class UrlTest {
     String internalLicencePSV = "https://iuap1.qa.olcs.dev-dvsacloud.uk/licence/21074";
     String internalLicenceGV = "https://iuap1.qa.olcs.dev-dvsacloud.uk/licence/369461";
@@ -20,12 +22,12 @@ public class UrlTest {
 
     @Before
     public void setup() {
-        System.setProperty("baseURL", Login.internalUrl);
         System.setProperty("browser", "chrome");
     }
 
     @Test
     public void internalScan() throws IOException, IllegalBrowserException, InterruptedException {
+        System.setProperty("baseURL", Login.internalUrl);
         ScanPage scanPage = new ScanPage();
         Login.toInternal();
         String[] baseUrls = {Login.internalUrl, internalLicencePSV, internalLicenceGV, internalApplication,
@@ -41,9 +43,11 @@ public class UrlTest {
 
     @Test
     public void selfServeScan() throws IOException, IllegalBrowserException, InterruptedException {
+        System.setProperty("baseURL", Login.selfServeUrl);
         CompleteJourneys completeJourneys = new CompleteJourneys();
         Login.toSelfServe();
-        Set<String> allUrls= completeJourneys.completeStandardJourney(Login.selfServeUrl);
+        sleep(3000);
+        Set<String> allUrls = completeJourneys.completeStandardJourney(Login.selfServeUrl);
         Object[] allUrlsArray = allUrls.toArray();
         Arrays.sort(allUrlsArray);
 

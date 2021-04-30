@@ -14,9 +14,9 @@ public class Login {
     private static String internalUserName = config.getString("internalUserName");
     private static String internalPassword = config.getString("internalNewPassword");
 
-    public static String selfServeUrl = "https://ssap1.qa.olcs.dev-dvsacloud.uk/";
+    public static String selfServeUrl = "https://ssap1.reg.olcs.dev-dvsacloud.uk/";
     private static String selfServeUserName = config.getString("selfServeUserName");
-    private static String selfServePassword = config.getString("internalNewPassword");
+    private static String selfServePassword = config.getString("selfServePassword");
 
 
     public static void toInternal() throws MalformedURLException, IllegalBrowserException {
@@ -28,6 +28,7 @@ public class Login {
 
     public static void toSelfServe() throws MalformedURLException, IllegalBrowserException {
         Browser.navigate().get(selfServeUrl);
+        Browser.navigate().findElement(By.xpath("//button[contains(text(),'Accept all cookies')]")).click();
         Browser.navigate().findElement(By.name("username")).sendKeys(selfServeUserName);
         Browser.navigate().findElement(By.name("password")).sendKeys(selfServePassword); // put into config or properties file.
         Browser.navigate().findElement(By.name("submit")).click();

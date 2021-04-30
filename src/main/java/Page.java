@@ -8,7 +8,7 @@ public class Page {
 
     public String checkboxesChoices;
     public HashMap<String,String> radioButtonChoices; // <Selector, choice>
-    public String link;
+    public String nextLink;
     public String submitSelector;
 
 //    public fillInPage() {

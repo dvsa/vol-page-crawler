@@ -3,6 +3,8 @@ import activesupport.driver.Browser;
 import activesupport.faker.FakerUtils;
 import Util.SeleniumUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
+import org.openqa.selenium.ElementNotInteractableException;
 import org.openqa.selenium.WebElement;
 
 import java.net.MalformedURLException;
@@ -21,19 +23,33 @@ public abstract class AnswerBot {
                 String type = webElement.getAttribute("type");
                 SeleniumUtils.waitForLoad(Browser.navigate());
 
-                if (type.equals("radio")) {
-                    if (webElement.getAttribute("value").equals("Y") && !webElement.isSelected())
-                    webElement.click();
-                }
+                String isElementDisabled = webElement.getAttribute("disabled");
 
-                if (type.equals("text")) {
-                    webElement.sendKeys(faker.generateFirstName());
-                }
+                try {
+                    if (isElementDisabled == null || isElementDisabled.equals("false")) {
 
-                if (type.equals("checkbox")) {
-                    webElement.click();
-                }
+                        if (type.equals("radio")) {
+                            if (webElement.getAttribute("value").equals("Y") && !webElement.isSelected()) {
+                                webElement.click();
+                            }
+                        }
+
+                        if (type.equals("text")) {
+                            webElement.sendKeys(faker.generateFirstName());
+                        }
+
+                        if (type.equals("checkbox")) {
+                            webElement.click();
+                        }
 //                TODO: if a search, enter valid postcode just to get a response and utilise search
+                    }
+
+                } catch (ElementClickInterceptedException e) {
+                    e.printStackTrace();
+                } catch (ElementNotInteractableException e) {
+                    e.printStackTrace();
+                }
+
             }
         }
     }

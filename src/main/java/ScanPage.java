@@ -151,7 +151,21 @@ public class ScanPage {
                         || url.contains("?validForYear")
                         || url.contains("postScoringReport")
                         || url.contains("alignStock")
-                        || url.contains("ms-word:ofe")) {
+                        || url.contains("ms-word:ofe")
+
+                        // SS Extra Exclusions
+                        || url.contains("?lang")
+                        || url.contains("tel:01133051101")
+                        || url.contains("mailto:notifications@vehicle-operator-licensing.service.gov.uk")
+                        || url.contains("privacy-notice/")
+                        || url.contains("terms-and-conditions/")
+                        || url.contains("cookies/settings/")
+                        || url.contains("#main-content")
+                        || url.contains("accessibility-statement")
+                        || url.contains("your-account")
+                        || url.contains("manage-user")
+                        || url.contains("dashboard")
+                        || url.equals(getBaseURL())) {
                     LOGGER.info(getUrl().concat(" did not get scanned"));
                 } else {
                     scannedUrls.add(getUrl());
@@ -166,7 +180,7 @@ public class ScanPage {
 
     public Set<String> scanForSubmitButtonIds() throws MalformedURLException, IllegalBrowserException {
         List<WebElement> submitButtons = Browser.navigate().findElements(By.xpath("//button[@type='submit']"));
-        Set<String> submitButtonIds = null;
+        Set<String> submitButtonIds = new HashSet<>();
 
         for(WebElement submit : submitButtons) {
             if(!submit.getAttribute("name").contains("address")

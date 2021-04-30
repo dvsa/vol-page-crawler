@@ -18,6 +18,14 @@ public class Journey {
         return pages.get(url);
     }
 
+    public void addPage(String url, Page page) {
+        pages.put(url, page);
+    }
+
+    public Set<String> getAllPageUrls() {
+        return pages.keySet();
+    }
+
     public Journey forkJourney() {
         Journey journey = new Journey();
 

@@ -3,4 +3,5 @@
 target
 allUrlsStoredInternal.txt
 allUrls.txt
-application.conf
+application*.conf
+applicationREG.conf
