@@ -1,7 +1,6 @@
 /.idea
 /LOGS
 target
-allUrlsStoredInternal.txt
-allUrls.txt
-application*.conf
-applicationREG.conf
+*.conf
+*.txt
+*.iml

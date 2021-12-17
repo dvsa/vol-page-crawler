@@ -44,8 +44,6 @@ public abstract class AnswerBot {
 //                TODO: if a search, enter valid postcode just to get a response and utilise search
                     }
 
-                } catch (ElementClickInterceptedException e) {
-                    e.printStackTrace();
                 } catch (ElementNotInteractableException e) {
                     e.printStackTrace();
                 }
