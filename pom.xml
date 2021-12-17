@@ -6,16 +6,15 @@
 
     <groupId>org.dvsa.testing.lib</groupId>
     <artifactId>PageCrawler</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <nexus.releases>https://nexus.olcs.dev-dvsacloud.uk/repository/maven-releases</nexus.releases>
         <nexus.snapshots>https://nexus.olcs.dev-dvsacloud.uk/repository/maven-snapshots</nexus.snapshots>
         <maven.compiler.version>3.8.1</maven.compiler.version>
-        <active-support.version>1.4.4.9</active-support.version>
-        <owasp-dependency-checker.version>6.0.1</owasp-dependency-checker.version>
-        <slf4j-log4j12.version>2.12.1</slf4j-log4j12.version>
+        <active-support.version>1.6.2</active-support.version>
+        <slf4j-log4j12.version>2.16.0</slf4j-log4j12.version>
         <java.version>1.8</java.version>
         <junit.jupiter.version>5.6.0</junit.jupiter.version>
         <apache-commons.version>1.8</apache-commons.version>
@@ -49,21 +48,6 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>${owasp-dependency-checker.version}</version>
-                <configuration>
-                    <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -86,6 +70,11 @@
             <groupId>org.dvsa.testing.lib</groupId>
             <artifactId>active-support</artifactId>
             <version>${active-support.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.14.3</version>
         </dependency>
     </dependencies>
 </project>
