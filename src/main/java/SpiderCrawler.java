@@ -15,7 +15,7 @@ public class SpiderCrawler{
     private static final Logger LOGGER = LogManager.getLogger(SpiderCrawler.class);
 
     public static Document request(String url, ArrayList<String> visitedURL) {
-        Document doc = null;
+        Document doc;
         try {
             if (isUrlValid(url)) {
                  doc = Jsoup.connect(url).get();
@@ -27,21 +27,20 @@ public class SpiderCrawler{
                 return doc;
             }
         } catch (IOException e) {
-            return doc;
+            return null;
         }
         return null;
     }
 
 
     public static void crawler(int level, String url, ArrayList<String> visited) {
-        if (level <= 5) {
+        if (level <= 3) {
             Document doc = request(url, visited);
             if (doc != null) {
                 for (Element link : doc.select("a[href]")) {
                     String formattedLink = link.absUrl("href");
-                    if (!visited.contains(formattedLink)) {
+                    if (!visited.contains(formattedLink))
                         crawler(level++, formattedLink, visited);
-                    }
                 }
             }
         }
