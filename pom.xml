@@ -77,4 +77,12 @@
             <version>1.14.3</version>
         </dependency>
     </dependencies>
+
+    <!--  Nexus Configuration  -->
+    <distributionManagement>
+        <repository>
+            <id>maven-releases</id>
+            <url>${nexus.releases}</url>
+        </repository>
+    </distributionManagement>
 </project>
