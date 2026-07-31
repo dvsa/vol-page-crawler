@@ -43,7 +43,7 @@ public class BedrockAgentAnalyser {
         this.agentAliasId = org.dvsa.testing.framework.config.AppConfig.getString("bedrock.agent.alias.id");
     }
 
-    public Map<String, BedrockRecommendation> analyseUniqueViolations(Map<String, Rule> uniqueRules) throws Exception {
+    public Map<String, BedrockRecommendation> analyseUniqueViolations(Map<String, Rule> uniqueRules) {
         LOGGER.info("Starting chunked analysis for {} unique rule IDs", uniqueRules.size());
 
         Map<String, BedrockRecommendation> finalMap = new HashMap<>();
@@ -122,7 +122,7 @@ public class BedrockAgentAnalyser {
             JSONObject obj = new JSONObject();
             obj.put("ruleId", entry.getKey());
             obj.put("description", entry.getValue().getDescription());
-            obj.put("htmlSnippet", entry.getValue().getImpact());
+            obj.put("impact", entry.getValue().getImpact());
             array.put(obj);
         }
         return array.toString();

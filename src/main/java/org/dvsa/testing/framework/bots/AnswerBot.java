@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.dvsa.testing.framework.axe.AXEScanner;
 import org.dvsa.testing.framework.config.AppConfig;
+import org.dvsa.testing.framework.jsoup.SpiderCrawler;
 import org.dvsa.testing.framework.utils.DomainValidator;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -34,19 +35,35 @@ public class AnswerBot {
     }
 
     public static void formAutoFill(Object driver, String url, String baseDomain, boolean allowSubdomains) {
+        formAutoFill(driver, url, baseDomain, allowSubdomains, null);
+    }
+
+    /**
+     * Fills and clicks through a form journey, scanning every step.
+     * Pass the crawler's {@code visited} set to record each page the bot traverses,
+     * so a surrounding crawl does not re-scan them.
+     */
+    public static void formAutoFill(Object driver, String url, String baseDomain, boolean allowSubdomains, Set<String> visited) {
         if (driver instanceof Page page) {
-            runPlaywrightEngine(page, url, baseDomain, allowSubdomains);
+            runPlaywrightEngine(page, url, baseDomain, allowSubdomains, visited);
         } else if (driver instanceof WebDriver seleniumDriver) {
-            runSeleniumEngine(seleniumDriver, url, baseDomain, allowSubdomains);
+            runSeleniumEngine(seleniumDriver, url, baseDomain, allowSubdomains, visited);
         } else {
             LOGGER.warn("Unsupported driver type: {}", driver.getClass());
+        }
+    }
+
+    private static void markVisited(Set<String> visited, String url) {
+        if (visited != null && url != null) {
+            visited.add(SpiderCrawler.normaliseUrl(url));
         }
     }
 
 
     private static void runPlaywrightEngine(Page page, String url,
                                             String baseDomain,
-                                            boolean allowSubdomains) {
+                                            boolean allowSubdomains,
+                                            Set<String> visited) {
 
         if (!DomainValidator.isSameDomain(url, baseDomain, allowSubdomains)) {
             LOGGER.warn("Skipping form fill: outside domain");
@@ -69,6 +86,7 @@ public class AnswerBot {
                     LOGGER.warn("Redirected outside domain.");
                     return;
                 }
+                markVisited(visited, page.url());
 
                 // --- Fill Inputs (Locator based, no ElementHandle) ---
                 Locator inputs = page.locator("input:not([type='hidden']), textarea, select");
@@ -121,7 +139,8 @@ public class AnswerBot {
     private static void runSeleniumEngine(WebDriver driver,
                                           String url,
                                           String baseDomain,
-                                          boolean allowSubdomains) {
+                                          boolean allowSubdomains,
+                                          Set<String> visited) {
 
         try {
             driver.get(url);
@@ -137,6 +156,7 @@ public class AnswerBot {
                     LOGGER.warn("Redirected outside domain.");
                     return;
                 }
+                markVisited(visited, currentUrl);
 
                 List<WebElement> inputs =
                         driver.findElements(By.cssSelector("input:not([type='hidden']), textarea, select"));

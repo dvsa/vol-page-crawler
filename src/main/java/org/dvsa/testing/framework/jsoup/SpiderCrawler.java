@@ -62,15 +62,30 @@ public class SpiderCrawler {
 
 
     public static void crawler(int level, String url, Set<String> visited, Object driver) {
+        crawler(level, url, visited, driver, false);
+    }
+
+    /**
+     * @param formFill when true, pages containing a form are handed to the AnswerBot,
+     *                 which fills inputs and clicks through the journey, scanning every
+     *                 step. This SUBMITS FORMS against the target service and is
+     *                 intentionally random, so it is opt-in; the default crawl remains
+     *                 read-only.
+     */
+    public static void crawler(int level, String url, Set<String> visited, Object driver, boolean formFill) {
         String baseDomain = DomainValidator.extractDomain(url);
         if (baseDomain == null) {
             LOGGER.error("Cannot extract domain from starting URL: {}", url);
             return;
         }
-        crawlerWithDomain(level, url, visited, driver, baseDomain, false);
+        crawlerWithDomain(level, url, visited, driver, baseDomain, false, formFill);
     }
 
     public static void crawlerWithDomain(int level, String url, Set<String> visited, Object driver, String baseDomain, boolean allowSubdomains) {
+        crawlerWithDomain(level, url, visited, driver, baseDomain, allowSubdomains, false);
+    }
+
+    public static void crawlerWithDomain(int level, String url, Set<String> visited, Object driver, String baseDomain, boolean allowSubdomains, boolean formFill) {
         if (level >= MAX_CRAWL_DEPTH || visited.size() >= MAX_URLS_PER_DOMAIN) {
             return;
         }
@@ -118,10 +133,15 @@ public class SpiderCrawler {
             Document doc = Jsoup.parse(freshContent, actualUrl);
             var links = doc.select("a[href]");
 
+            if (formFill && !doc.select("form").isEmpty()) {
+                LOGGER.info("Form detected on {} — handing over to AnswerBot", actualUrl);
+                AnswerBot.formAutoFill(driver, actualUrl, baseDomain, allowSubdomains, visited);
+            }
+
             for (Element link : links) {
                 String nextUrl = link.absUrl("href");
                 if (shouldFollow(nextUrl, baseDomain, visited, allowSubdomains)) {
-                    crawlerWithDomain(level + 1, nextUrl, visited, driver, baseDomain, allowSubdomains);
+                    crawlerWithDomain(level + 1, nextUrl, visited, driver, baseDomain, allowSubdomains, formFill);
                 }
             }
         } catch (Exception e) {
@@ -129,7 +149,7 @@ public class SpiderCrawler {
         }
     }
 
-    private static String normaliseUrl(String urlString) {
+    public static String normaliseUrl(String urlString) {
         if (urlString == null || urlString.trim().isEmpty()) return "";
 
         try {

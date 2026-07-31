@@ -4,125 +4,55 @@ An automated testing and auditing engine combining Selenium or Playwright, Axe-c
 
 ---
 
+### Repository Layout
+
+The framework ships in two languages so both Java and TypeScript projects can consume it:
+
+| Implementation | Location | Consumed via | Documentation |
+| --- | --- | --- | --- |
+| Java | repository root (`src/`, `pom.xml`) | Maven dependency | [src/README.md](src/README.md) |
+| TypeScript | [`typescript/`](typescript/) | npm package `@dvsa/page-crawler` | [typescript/README.md](typescript/README.md) |
+
+Both implementations share the same architecture and behaviour. When adding a feature or fixing a bug in one, mirror the change in the other so the two stay in sync.
+
+---
+
 ### Key Features
 - **Intelligent Auto-Fill:** Traverses complex GOV.UK forms using domain-aware logic to reach deep-link pages.
+- **Spider Crawler:** Recursively crawls same-domain links and scans every page.
 - **Live GDS Scraper:** Dynamically pulls the latest guidance from the GOV.UK Design System to ensure recommendations are always up-to-date.
-- **AI Resolution Engine:** Uses AWS Bedrock (Nova lite) to analyze technical Axe violations and rewrite failing HTML into GDS-compliant code.
+- **AI Resolution Engine:** Uses AWS Bedrock to analyze technical Axe violations and rewrite failing HTML into GDS-compliant code.
 - **Cumulative Auditing:** Scans multiple pages across a session and merges them into a single, high-fidelity HTML report.
 - **Actionable Fixes:** Provides "Download Fix Snippet" buttons for developers to immediately test corrected HTML.
 
 ---
 
 ### Architecture
-The framework is divided into four logical layers:
+Both implementations are divided into the same four logical layers:
 
-1. **Execution Layer** (`AXEScanner`)
+1. **Execution Layer** (AXE scanner)
    - Uses either Playwright (`Page`) or Selenium (`WebDriver`) to run Axe-core audits.
-   - State Management: Accumulates violations and screenshots in static concurrent maps.
+   - State Management: Accumulates violations and screenshots across the session.
    - Screenshot Mapping: Captures one full-page screenshot per URL for visual evidence.
 
-2. **Context Layer** (`GovUkScraper`)
-   - JSoup-based engine scrapes GDS Style and Component pages, providing "Ground Truth" context to prevent AI hallucinations.
+2. **Context Layer** (GOV.UK scraper)
+   - HTML-parsing engine (JSoup in Java, cheerio in TypeScript) scrapes GDS Style and Component pages, providing "Ground Truth" context to prevent AI hallucinations.
 
-3. **Intelligence Layer** (`BedrockAgentAnalyser`)
+3. **Intelligence Layer** (Bedrock agent analyser)
    - Bridges technical errors and human-readable guidance.
    - Processes violations in batches for AI accuracy and robust API communication.
 
-4. **Presentation Layer** (`HtmlReportGenerator`)
+4. **Presentation Layer** (HTML report generator)
    - Generates standalone, interactive HTML reports.
    - Fixes sourced via AI → Static Knowledge Base → Hardcoded GDS Fallbacks.
    - Visual Audit: Impact-coded badges and modal screenshot viewers.
 
 ---
 
-### Setup & Installation
+### Getting Started
 
-#### Prerequisites
-- Java 21+ (see `pom.xml` for version)
-- Maven
-- AWS credentials (configured for Bedrock access)
-- Playwright browsers if using Playwright (run: `mvn playwright:install`)
-- Browser drivers if using Selenium (managed automatically via WebDriverManager)
-
-#### Dependencies
-Ensure the following are in your `pom.xml`:
-- `com.deque.html.axe-core:playwright`
-- `org.jsoup:jsoup`
-- `org.json:json`
-- `org.slf4j:slf4j-simple` (logging)
-- `software.amazon.awssdk:bedrockagentruntime` (Bedrock integration)
-- `com.microsoft.playwright:playwright`
-- `org.apache.logging.log4j:log4j-core` and `log4j-api`
-- `com.fasterxml.jackson.core:jackson-databind` and `jackson-datatype-jsr310`
-- `org.apache.commons:commons-lang3`
-- `org.junit.jupiter:junit-jupiter-api` and `junit-jupiter-engine`
-
----
-
-### Usage
-
-#### Running a Scan
-You can scan with either Playwright or Selenium. `AXEScanner.scan(...)` accepts both `Page` and `WebDriver`.
-
-```java
-// Playwright example
-@Test
-void accessibilityAuditPlaywright() {
-   page.navigate("https://your-gov-service.gov.uk");
-   AXEScanner.scan(page); // Repeat across multiple pages
-}
-
-@AfterAll
-static void tearDown() {
-   AXEScanner.generateFinalReport(); // Generates the cumulative AI report
-}
-```
-
-```java
-// Selenium example
-@Test
-void accessibilityAuditSelenium() {
-   WebDriver driver = new ChromeDriver();
-   try {
-      driver.get("https://your-gov-service.gov.uk");
-      AXEScanner.scan(driver); // Repeat across multiple pages
-   } finally {
-      driver.quit();
-   }
-}
-```
-
-```java
-// Unified driver setup from this project
-Object driver = DriverManager.init("playwright", "chrome"); // or ("selenium", "chrome")
-AXEScanner.scan(driver);
-DriverManager.quit();
-```
-
-#### Configuration
-Pass standards via system properties:
-```
--Dstandards.scan=wcag22aa,best-practice
-```
-
-Create `src/test/resources/application.properties` (or copy from `src/main/resources/application.properties.dist`) and set required values.
-bedrock.region=your_region
-bedrock.agent.id=YOUR_BEDROCK_AGENT_ID
-bedrock.agent.alias.id=YOUR_BEDROCK_AGENT_ALIAS_ID
-
-
-### Report Output
-Reports are generated in:
-- `target/reports/accessibility-audit-[timestamp].html`
-Screenshots are stored in:
-- `target/reports/screenshots/`
-
----
-
-### Troubleshooting
-- Ensure AWS credentials are set up for Bedrock access.
-- Run `mvn playwright:install` if browsers are missing.
-- Check `target/surefire-reports/` for test logs.
+- Java projects: see [src/README.md](src/README.md) for Maven setup, usage, and configuration.
+- TypeScript/Node projects: see [typescript/README.md](typescript/README.md) for npm installation, test-runner examples, and configuration.
 
 ---
 
