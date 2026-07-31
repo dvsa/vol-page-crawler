@@ -6,7 +6,7 @@
 
     <groupId>org.dvsa.testing.framework</groupId>
     <artifactId>accessibility-ai-core</artifactId>
-    <version>2.0.4</version>
+    <version>2.0.5</version>
 
     <name>AI-Augmented Accessibility Framework</name>
     <description>A hybrid page crawler that combines axe-core scans with AI-driven semantic analysis.</description>
