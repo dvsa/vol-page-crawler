@@ -103,3 +103,41 @@ jobs:
     if: needs.version-check.outputs.npm == 'true'
     uses: ./.github/workflows/publish-npm.yml
     secrets: inherit
+
+  # Publishing is merge-driven, so nothing else would record what shipped.
+  # This tags the merge commit and cuts a release for the version just
+  # published. Releases are documentation only — no workflow triggers off them.
+  release:
+    name: tag and release
+    needs: [ version-check, publish-maven, publish-npm ]
+    if: >-
+      always()
+      && (needs.version-check.outputs.maven == 'true' || needs.version-check.outputs.npm == 'true')
+      && !contains(needs.*.result, 'failure')
+      && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create release for the published version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          version=$(python3 -c "import xml.etree.ElementTree as ET; \
+            ns='{http://maven.apache.org/POM/4.0.0}'; \
+            print(ET.parse('pom.xml').getroot().find(ns+'version').text)")
+
+          # Re-runs must not fail once the release exists.
+          if gh release view "$version" >/dev/null 2>&1; then
+            echo "Release $version already exists — nothing to do."
+            exit 0
+          fi
+
+          gh release create "$version" \
+            --target "$GITHUB_SHA" \
+            --title "$version" \
+            --generate-notes
