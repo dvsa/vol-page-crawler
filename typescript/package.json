@@ -1,6 +1,6 @@
 {
   "name": "@dvsa/page-crawler",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "description": "AI-Augmented Accessibility Framework - crawls pages with Playwright or Selenium, runs axe-core audits, and generates GOV.UK Design System compliant fix reports via AWS Bedrock. TypeScript port of the Java PageCrawler.",
   "license": "MIT",
   "repository": {
@@ -39,7 +39,7 @@
     "@aws-sdk/client-bedrock-agent-runtime": "^3.600.0",
     "@axe-core/playwright": "^4.10.0",
     "@axe-core/webdriverjs": "^4.10.0",
-    "@faker-js/faker": "^9.0.0",
+    "@faker-js/faker": "^10.6.0",
     "axe-core": "^4.10.0",
     "cheerio": "^1.0.0",
     "playwright": "^1.45.0",
