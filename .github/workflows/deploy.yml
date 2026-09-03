@@ -3,12 +3,103 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ main ]
-  release:
-    types: [ created ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-  call-maven-workflow:
+  build-java:
+    name: build java
     uses: ./.github/workflows/maven.yml
     with:
-      maven-goal: 'deploy' # We tell it to publish the package
+      maven-goal: 'package'
+    secrets: inherit
+
+  build-node:
+    name: build node
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: typescript/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  # Publishing is version-gated: GitHub Packages rejects overwriting an existing
+  # version, so a merge that does not bump the version must not attempt to publish.
+  version-check:
+    name: detect version bump
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      maven: ${{ steps.check.outputs.maven }}
+      npm: ${{ steps.check.outputs.npm }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - id: check
+        run: |
+          set -euo pipefail
+
+          # A manual run republishes whatever is on main, without needing a bump.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "maven=true" >> "$GITHUB_OUTPUT"
+            echo "npm=true"   >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          pom_version() {
+            python3 -c "import sys, xml.etree.ElementTree as ET; \
+              ns='{http://maven.apache.org/POM/4.0.0}'; \
+              print(ET.parse(sys.argv[1]).getroot().find(ns+'version').text)" "$1"
+          }
+
+          curr_maven=$(pom_version pom.xml)
+          curr_npm=$(jq -r .version typescript/package.json)
+
+          # An empty previous value means "new file" or "no parent" — both publish.
+          prev_maven=""
+          prev_npm=""
+          if git rev-parse --verify -q HEAD^ >/dev/null; then
+            if git show HEAD^:pom.xml > /tmp/prev-pom.xml 2>/dev/null; then
+              prev_maven=$(pom_version /tmp/prev-pom.xml)
+            fi
+            prev_npm=$(git show HEAD^:typescript/package.json 2>/dev/null | jq -r .version || echo "")
+          fi
+
+          [ "$curr_maven" != "$prev_maven" ] && maven=true || maven=false
+          [ "$curr_npm"   != "$prev_npm"   ] && npm=true   || npm=false
+
+          echo "maven: ${prev_maven:-<none>} -> $curr_maven (publish: $maven)"
+          echo "npm:   ${prev_npm:-<none>} -> $curr_npm (publish: $npm)"
+
+          echo "maven=$maven" >> "$GITHUB_OUTPUT"
+          echo "npm=$npm"     >> "$GITHUB_OUTPUT"
+
+  publish-maven:
+    name: publish maven package
+    needs: [ build-java, build-node, version-check ]
+    if: needs.version-check.outputs.maven == 'true'
+    uses: ./.github/workflows/maven.yml
+    with:
+      maven-goal: 'deploy'
+    secrets: inherit
+
+  publish-npm:
+    name: publish npm package
+    needs: [ build-java, build-node, version-check ]
+    if: needs.version-check.outputs.npm == 'true'
+    uses: ./.github/workflows/publish-npm.yml
     secrets: inherit

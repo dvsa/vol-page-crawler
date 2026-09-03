@@ -6,7 +6,7 @@
 
     <groupId>org.dvsa.testing.framework</groupId>
     <artifactId>accessibility-ai-core</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
 
     <name>AI-Augmented Accessibility Framework</name>
     <description>A hybrid page crawler that combines axe-core scans with AI-driven semantic analysis.</description>
@@ -25,19 +25,19 @@
         <maven.compiler.version>3.15.0</maven.compiler.version>
         <java.version>21</java.version>
         <log4j.version>2.26.1</log4j.version>
-        <junit.jupiter.version>6.1.2</junit.jupiter.version>
-        <jsoup.version>1.23.1</jsoup.version>
-        <axe.playwright.version>4.12.0</axe.playwright.version>
-        <axe.selenium.version>4.12.0</axe.selenium.version>
+        <junit.jupiter.version>6.1.3</junit.jupiter.version>
+        <jsoup.version>1.23.2</jsoup.version>
+        <axe.playwright.version>4.13.0</axe.playwright.version>
+        <axe.selenium.version>4.13.0</axe.selenium.version>
         <commons.version>3.20.0</commons.version>
-        <playwright.version>1.61.0</playwright.version>
-        <selenium.version>4.46.0</selenium.version>
-        <aws.sdk.version>2.50.1</aws.sdk.version>
-        <jackson.version>3.2.1</jackson.version>
-        <jackson2.version>2.22.1</jackson2.version>
+        <playwright.version>1.62.0</playwright.version>
+        <selenium.version>4.48.0</selenium.version>
+        <aws.sdk.version>2.54.11</aws.sdk.version>
+        <jackson.version>3.2.2</jackson.version>
+        <jackson2.version>2.22.2</jackson2.version>
         <netty.version>4.1.136.Final</netty.version>
         <slf4j.version>2.0.18</slf4j.version>
-        <json.version>20260719</json.version>
+        <json.version>20260814</json.version>
         <faker.version>2.7.0</faker.version>
     </properties>
 
